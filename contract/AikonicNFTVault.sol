@@ -42,8 +42,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     address public joeLP = address(0x781655d802670bbA3c89aeBaaEa59D3182fD755D);
     address public wavax = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7);
     address public mim = address(0x130966628846BFd36ff31a822705796e8cb8C18D);
-    address public wine = address(0xC55036B5348CfB45a932481744645985010d3A44);
-    address public vineyard = address(0x28c65dcB3a5f0d456624AFF91ca03E4e315beE49);
+    address public wine = address(0xADc8387a334168D9629d1c6751DdBAB4bc21ADEF);//address(0xC55036B5348CfB45a932481744645985010d3A44);
+    address public vineyard = address(0x2D6f1CfbE5FAa939333Bd8461d7A8C02e072E9D0);//address(0x28c65dcB3a5f0d456624AFF91ca03E4e315beE49);
 
     // Token ID Counter
     using Counters for Counters.Counter;
@@ -62,13 +62,12 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         _;
     }
     function _checkEnabled() internal view virtual {
-        require(enabled == true, "Quantum Press is not enabled");
+        require(enabled == true, "Vault is not enabled");
     }
 
     // Constructor
-    constructor(string memory _uri, uint _timelock, uint _pool_id) ERC721("Aikonography Collection", "AIKONS") {
-        uri = _uri;
-        timelock = _timelock;
+    constructor(string memory _uri, uint _pool_id) ERC721("Aikonic NFT Collection", "AIKONS") {
+        uri = _uri;        
         pool_id = _pool_id;
         enabled = true;
     }
@@ -189,8 +188,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     function unlock() public payable {
         uint amount = msg.value;
         address account = msg.sender;
-        require(amount >= 5e36/avaxPrice(), "Unlock failure, insufficient funds sent");
-
+        uint fee = unlockAvax();
+        require(amount >= fee, "Unlock failure, insufficient funds sent");        
         user[account].unlocked = true;
     }
 
