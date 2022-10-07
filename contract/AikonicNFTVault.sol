@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.0;
 
 /*
     Name: Aikongraphy NFT Vault
@@ -7,14 +8,17 @@
 
     Desc:
     Allows the user to stake tokens in order to earn NFTs, requires
-    the user to unlock the vault first by paying the unlock fee.
+    the user to unlock the vault first by paying the unlock fee. The
+    unlock fee is used to buy and burn the staking token.
 
     User can claim the NFT after the timelock expires, they are free
     to withdraw at anytime but will lose the NFT if the timelock is
     still active.
+
+    While staked, user rewards are deposited in a staking pool to earn
+    rewards for the developer. 
 */
 
-pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -34,10 +38,12 @@ struct UserInfo {
 contract AikonicNFTVault is ERC721URIStorage, Ownable {
     uint public constant MAX_SPEED_BONUS = 2 * 1e18;
 
-    uint public unlockFee = 0; // Fee is in USD, so 5 * 1e18 = $5 and 1 * 1e16 = $0.01
-    uint public stakeAmt = 0;
-    uint public timelock = 0;
-    uint public pool_id = 0;
+    uint public unlockFee = 0; // Fee required to unlock the vault, fee is in USD, so 5 * 1e18 = $5
+    uint public stakeAmt = 0;  // Minimum amount to stake to earn the NFT
+    uint public timelock = 0; // Timelock period
+    uint public pool_id = 0; // Pool ID of the farming pool
+
+    // Address objects
     address public stakeToken = address(0x1e553939Eb3611EabbCa534c78AEc3C821464fad);
     address public joeLP = address(0x781655d802670bbA3c89aeBaaEa59D3182fD755D);
     address public wavax = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7);
@@ -52,6 +58,7 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // IPFS Image URI
     string public uri = "";
 
+    // User DB
     mapping(address => UserInfo) public user;
     address[] public userList;
 
@@ -66,14 +73,16 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     }
 
     // Constructor
-    constructor(string memory _uri, uint _pool_id) ERC721("Aikonic NFT Collection", "AIKONS") {
-        uri = _uri;        
+    constructor(string memory _uri, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _pool_id) ERC721("Aikonic NFT Collection", "AIKONS") {
+        uri = _uri;
+        unlockFee = _unlockFee;
+        stakeAmt = _stakeAmt;
+        timelock = _timelock;
         pool_id = _pool_id;
         enabled = true;
     }
 
-/* ADMIN Functions */
-    
+/* ADMIN Functions */    
     // Set the token URI
     function setURI(string memory _uri) public onlyOwner {
         uri = _uri;
@@ -84,29 +93,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         enabled = _enabled;
     }
 
-    // initialize the unlock fee
-    function initUnlockFee(uint fee) public onlyOwner {
-        require(fee > 0, "Unlock fee can't be 0");
-        require(unlockFee == 0, "Unlock fee is already set and can't be set again");
-        unlockFee = fee;
-    }
-
-    // initialize the stake amount
-    function initStakeAmount(uint reqDep) public onlyOwner {
-        require(reqDep > 0, "Stake amount can't be 0");
-        require(stakeAmt == 0, "Stake amount is already set and can't be set again");
-        stakeAmt = reqDep;
-    }
-    
-    // initialize the timelock
-    function initTimelock(uint _timelock) public onlyOwner {
-        require(_timelock > 0, "Timelock can't be 0");
-        require(timelock == 0 , "Timelock already set and can't be set again");
-        timelock = _timelock;
-    }
-
-    // Withdraw any wine held in the contract
-    function withdrawWine() public onlyOwner {
+    // Withdraw any developer rewards held in the contract
+    function slurp() public onlyOwner {
         address account = msg.sender;
         ERC20 _wine = ERC20(wine);
         WineRewardPool _vineyard = WineRewardPool(vineyard);
@@ -147,7 +135,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // Returns the current price of avax to MIM from the trader joe LP
     function avaxPrice() internal pure returns(uint) {
         return 17 * 1e18;
-        /*
+
+        /* Uncomment when deploying to mainnet
         ERC20 _wavax = ERC20(wavax);
         ERC20 _mim = ERC20(mim);
         uint wavaxBal = _wavax.balanceOf(joeLP);
@@ -192,8 +181,12 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     function unlock() public payable {
         uint amount = msg.value;
         address account = msg.sender;
-        uint fee = unlockAvax();
-        require(amount >= fee, "Unlock failure, insufficient funds sent");        
+        
+        // Get the unlock fee in AVAX
+        uint fee = unlockAvax();        
+        require(amount >= fee, "Unlock failure, insufficient funds sent");
+
+        // Approve unlock
         user[account].unlocked = true;
     }
 
@@ -202,24 +195,30 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         address account = msg.sender;
         ERC20 token = ERC20(stakeToken);
         WineRewardPool pool = WineRewardPool(vineyard);
+
+        // Sanity check
         require(amount > 0, "Deposit failure, you can't deposit 0");
         require(user[account].unlocked == true, "Deposit failure, you haven't unlocked this vault");
         require(amount >= stakeAmt || user[account].balance >= stakeAmt, "Deposit failure, insufficient deposit amount");
         require(token.balanceOf(account) >= amount, "Deposit failure, you don't have enough tokens");
         
+        // See if the sender has positive balance
         if(user[account].balance > 0)
+            // See if the sender has a nft to claim
             if(canClaim(account))
-                claim();
+                mint(account);
         
         // Set the user balance to the current stake amount and update the timestamp
         user[account].balance = user[account].balance == 0? amount: user[account].balance + amount;
         user[account].timestamp = user[account].timestamp == 0? block.timestamp: user[account].timestamp;
 
-        // Transfer the stake
+        // Transfer the stake from the sender
         token.transferFrom(account, address(this), amount);
+        // Give the farming pool permission to take the tokens
         if(token.allowance(account, vineyard) < amount) {
             token.approve(vineyard, amount);
         }
+        // Deposit
         pool.deposit(pool_id, amount);
 
         // Add sender to the global depositor list
@@ -233,6 +232,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         address account = msg.sender;
         ERC20 token = ERC20(stakeToken);
         WineRewardPool pool = WineRewardPool(vineyard);
+
+        // Sanity check
         require(user[account].unlocked == true, "Withdraw failure, you haven't unlocked this vault");
         require(user[account].balance > 0, "Withdraw failure, you don't have a stake in this vault");
 
@@ -240,8 +241,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         if(canClaim(account))
             mint(account);
 
-        pool.withdraw(pool_id, user[account].balance);        
-
+        // Withdraw the users tokens out of the farming pool
+        pool.withdraw(pool_id, user[account].balance);
         // Transfer back staked amount
         token.transfer(account, user[account].balance);
 
@@ -256,13 +257,15 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // Try to claim an NFT
     function claim() public {
         address account = msg.sender;
+
+        // Sanity check
         require(user[account].unlocked == true, "Claim failure, you haven't unlocked this vault");
         require(user[account].balance > 0, "Claim failure, you don't have a stake in this vault");
         require(canClaim(account), "Claim failure, you need to wait a while longer");
         
         // Mint the NFT
         mint(account);
-        // Update the timestamp for the next claim
+        // Update the timestamp for the sender
         user[account].timestamp = block.timestamp;
     }
 
