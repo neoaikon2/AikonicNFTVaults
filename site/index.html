@@ -6,356 +6,34 @@
 <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
-
+<script src="vaultmaster.js" ></script>
+<link rel="stylesheet" type="text/css" href="layout.css" />
 </head>
 <body onmouseup="hidePanels()">
 
-<style>
-@font-face {
-	font-family: Superstar;
-	src: url("superstar.ttf");
-}
-
-.shadow {
-	filter: drop-shadow(5px 5px 2px #000000FF);
-}
-
-body {
-	font-family: Consolas;
-	font-weight: bold;
-	font-size: 16px;
-	background-color: black;
-	color: #FFFFFF;
-}
-
-.bgimage {
-	position: fixed;
-	background: url('./bg.png');
-	filter: blur(4px);
-	opacity: .5;
-	background-attachment: fixed;
-	background-repeat: no-repeat;
-	background-size: auto 100%;
-	background-position: center center;
-	transform: translateZ(100px) scale(1.25);	
-	object-fit: fill;
-	left: 0px; top: 0px;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-	z-index: -10;
-}
-
-.main-container {
-	position: absolute;
-	left: 50%;
-	top: 7.5%;
-	transform: translate(-50%, 0);
-	min-width: 1000px;
-	padding-left: .6vw;
-	padding-right: .6vw;
-}
-
-.superstar {
-	font-family: Superstar,"sans-serif";
-}
-
-oldbody {
-	background: linear-gradient(113deg, rgba(14,0,15,1) 0%, rgba(116,61,116,1) 72%, rgba(14,0,15,1) 100%);
-}
-
-.menubar {
-	position: fixed;
-	background: #3E113FDA;
-	border: 2px solid #BABABA; border-radius: 5px;	
-	left: 0;
-	top: 0;
-	width: 99.5%;
-	height: 48px;
-	z-index: 10;
-}
-
-.groupbox {
-	border: 2px solid #BABABA; border-radius: 5px;	
-	background: #3E113FBA;
-	width: 100%;
-	backdrop-filter: blur(8px);
-	padding: 8px 0 8px 0;
-}
-
-.vaultbox {
-	border: 2px solid #BABABA; border-radius: 5px;	
-	background: #3E113FBA;	
-	backdrop-filter: blur(8px);
-	padding: 8px 0 8px 0;
-	margin: 16px 0 0 0;
-	width: 488px;
-	height: fit-content;
-}
-
-.vault-image {
-	width: 200px;
-	height: 200px;
-	background: black;
-	margin: 0 16px 0 16px;
-	border-radius: 28px;
-}
-
-.vault-container {
-	position: absolute;
-	width: 1000px;
-	left: 50%;
-	transform: translate(-50%, 0);
-	margin: 16px 0 0 0;
-}
-
-.vault-container img {	
-	width: 196px;
-	height: auto;
-	border: white solid 2px;
-	margin-top: 50%;
-	transform: translate(0, -50%);
-}
-
-.vault-info {
-	margin: 16px 16px 0 0px;
-	text-align: right;
-	width: 100%;
-}
-
-.previewbox {	
-	position: fixed;
-	background: #3E113FBA;
-	width: 600px;
-	height: 600px;
-	left: 50%;
-	top: 50%;
-	padding: 8px 0 8px 0;
-	transform: translate(-50%, -50%);
-	border: 2px solid #BABABA;
-	border-radius: 28px;
-	backdrop-filter: blur(8px);
-	z-index: 5;
-}
-
-.previewbox img {
-	width: 100%;
-	height: auto;
-	background-color: black;
-	margin-top: 50%;
-	transform: translate(0, -50%);	
-}
-
-.buttonbox {
-	position: absolute;
-	left: 50%; margin: 16px 0 0 0;
-	transform: translate(-50%, 0);
-	display: flex
-}
-
-.error-panel {
-	position: absolute;
-	background: black;
-	padding: 16px;
-	border: solid 2px #BA70BA;
-	border-radius: 16px;	
-	height: fit-content;
-	width: fit-content;
-	left: -50%;
-	top: 50%;
-	text-align: center;
-	transform: translate(-50%, -50%);
-	z-index: 100
-}
-
-.button {
-	background: #BA70BA;
-	padding: 4px 0 4px 0;
-	margin: 0 16px 8px 16px;
-	width: 125px;
-	height: fit-content;
-	cursor: hand;
-}
-
-.button:hover {
-	background: green;
-}
-</style>
-
-<script>
-
-const CHAIN_ID = 5777;//43114;
-const MAX_PROFIT = 3 * 10e18;
-const PRECISION = 1e18;
-const MAX_UINT = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
-
-/*
- * Checks for a valid metamask instance and requests the account
- * Returns true if the user connected to the site
- */
-const Web3Enabled = async () => {
-	if(typeof window.ethereum !== "undefined") {
-		await window.ethereum.request({method: 'eth_requestAccounts'}).then(function(result) {
-			console.log("[SUCCESS] " + result);
-		}, function(error) {
-			console.log("[ERROR " + error.code + "] " + error.message);
-		});
-
-		window.web3 = new Web3(window.ethereum);
-		return true;
-	} else {
-		console.log("Metamask is not installed!");
-	}
-	return false;
-}
-
-/*
- * Checks to make sure we're on the right chain and if not
- * invoke a switch
- */
- 
-const switchNetwork = async(chainId) => {
-	var currentChainId = window.web3.eth.net.getId();
-	if(currentChainId !== chainId) {
-		await window.ethereum.request(
-		{
-			method: 'wallet_switchEthereumChain',
-			params: [{ chainId: window.web3.utils.toHex(chainId) }]
-		});
-	}
-}
-
-const WINE_TOKEN = "0xADc8387a334168D9629d1c6751DdBAB4bc21ADEF";
-const GRAPE_TOKEN = "0x356cBc3a770b19cB7E8899200999C1Ebfe9bf7e1";
-const TOKEN_ABI = [{"inputs": [{"internalType": "uint256","name": "initialSupply","type": "uint256"}],"stateMutability": "nonpayable","type": "constructor"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": true,"internalType": "address","name": "spender","type": "address"},{"indexed": false,"internalType": "uint256","name": "value","type": "uint256"}],"name": "Approval","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "from","type": "address"},{"indexed": true,"internalType": "address","name": "to","type": "address"},{"indexed": false,"internalType": "uint256","name": "value","type": "uint256"}],"name": "Transfer","type": "event"},{"inputs": [{"internalType": "address","name": "owner","type": "address"},{"internalType": "address","name": "spender","type": "address"}],"name": "allowance","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "spender","type": "address"},{"internalType": "uint256","name": "amount","type": "uint256"}],"name": "approve","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "account","type": "address"}],"name": "balanceOf","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "decimals","outputs": [{"internalType": "uint8","name": "","type": "uint8"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "spender","type": "address"},{"internalType": "uint256","name": "subtractedValue","type": "uint256"}],"name": "decreaseAllowance","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "spender","type": "address"},{"internalType": "uint256","name": "addedValue","type": "uint256"}],"name": "increaseAllowance","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [],"name": "name","outputs": [{"internalType": "string","name": "","type": "string"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "symbol","outputs": [{"internalType": "string","name": "","type": "string"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "totalSupply","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "to","type": "address"},{"internalType": "uint256","name": "amount","type": "uint256"}],"name": "transfer","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "from","type": "address"},{"internalType": "address","name": "to","type": "address"},{"internalType": "uint256","name": "amount","type": "uint256"}],"name": "transferFrom","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "nonpayable","type": "function"}];
-
-const VINEYARD = "0x2D6f1CfbE5FAa939333Bd8461d7A8C02e072E9D0";
-const VINEYARD_ABI = [{"inputs": [{"internalType": "uint256","name": "_allocPoint","type": "uint256"},{"internalType": "contract IERC20","name": "_token","type": "address"},{"internalType": "bool","name": "_withUpdate","type": "bool"},{"internalType": "uint256","name": "_lastRewardTime","type": "uint256"}],"name": "add","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "_pid","type": "uint256"},{"internalType": "uint256","name": "_amount","type": "uint256"}],"name": "deposit","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "_pid","type": "uint256"}],"name": "emergencyWithdraw","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "_wine","type": "address"},{"internalType": "uint256","name": "_poolStartTime","type": "uint256"}],"stateMutability": "nonpayable","type": "constructor"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "user","type": "address"},{"indexed": true,"internalType": "uint256","name": "pid","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "amount","type": "uint256"}],"name": "Deposit","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "user","type": "address"},{"indexed": true,"internalType": "uint256","name": "pid","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "amount","type": "uint256"}],"name": "EmergencyWithdraw","type": "event"},{"inputs": [{"internalType": "contract IERC20","name": "_token","type": "address"},{"internalType": "uint256","name": "amount","type": "uint256"},{"internalType": "address","name": "to","type": "address"}],"name": "governanceRecoverUnsupported","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [],"name": "massUpdatePools","outputs": [],"stateMutability": "nonpayable","type": "function"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "user","type": "address"},{"indexed": false,"internalType": "uint256","name": "amount","type": "uint256"}],"name": "RewardPaid","type": "event"},{"inputs": [{"internalType": "uint256","name": "_pid","type": "uint256"},{"internalType": "uint256","name": "_allocPoint","type": "uint256"}],"name": "set","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "_operator","type": "address"}],"name": "setOperator","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "_pid","type": "uint256"}],"name": "updatePool","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "_pid","type": "uint256"},{"internalType": "uint256","name": "_amount","type": "uint256"}],"name": "withdraw","outputs": [],"stateMutability": "nonpayable","type": "function"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "user","type": "address"},{"indexed": true,"internalType": "uint256","name": "pid","type": "uint256"},{"indexed": false,"internalType": "uint256","name": "amount","type": "uint256"}],"name": "Withdraw","type": "event"},{"inputs": [{"internalType": "uint256","name": "_fromTime","type": "uint256"},{"internalType": "uint256","name": "_toTime","type": "uint256"}],"name": "getGeneratedReward","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "operator","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "_pid","type": "uint256"},{"internalType": "address","name": "_user","type": "address"}],"name": "pendingShare","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "poolEndTime","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "","type": "uint256"}],"name": "poolInfo","outputs": [{"internalType": "contract IERC20","name": "token","type": "address"},{"internalType": "uint256","name": "allocPoint","type": "uint256"},{"internalType": "uint256","name": "lastRewardTime","type": "uint256"},{"internalType": "uint256","name": "accWinePerShare","type": "uint256"},{"internalType": "bool","name": "isStarted","type": "bool"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "poolStartTime","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "runningTime","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "TOTAL_REWARDS","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "totalAllocPoint","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "","type": "uint256"},{"internalType": "address","name": "","type": "address"}],"name": "userInfo","outputs": [{"internalType": "uint256","name": "amount","type": "uint256"},{"internalType": "uint256","name": "rewardDebt","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "wine","outputs": [{"internalType": "contract IERC20","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "winePerSecond","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"}];
-
-const VAULT = "0x0c65BAD172717fA891805212d91854302ccC9236";
-const VAULT_ABI = [{"inputs": [{"internalType": "string","name": "_uri","type": "string"},{"internalType": "uint256","name": "_pool_id","type": "uint256"}],"stateMutability": "nonpayable","type": "constructor"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": true,"internalType": "address","name": "approved","type": "address"},{"indexed": true,"internalType": "uint256","name": "tokenId","type": "uint256"}],"name": "Approval","type": "event"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "owner","type": "address"},{"indexed": true,"internalType": "address","name": "operator","type": "address"},{"indexed": false,"internalType": "bool","name": "approved","type": "bool"}],"name": "ApprovalForAll","type": "event"},{"inputs": [{"internalType": "address","name": "to","type": "address"},{"internalType": "uint256","name": "tokenId","type": "uint256"}],"name": "approve","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [],"name": "claim","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "amount","type": "uint256"}],"name": "deposit","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "reqDep","type": "uint256"}],"name": "initStakeAmount","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "_timelock","type": "uint256"}],"name": "initTimelock","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "uint256","name": "fee","type": "uint256"}],"name": "initUnlockFee","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "_address","type": "address"}],"name": "mint","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "nonpayable","type": "function"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "previousOwner","type": "address"},{"indexed": true,"internalType": "address","name": "newOwner","type": "address"}],"name": "OwnershipTransferred","type": "event"},{"inputs": [],"name": "renounceOwnership","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "from","type": "address"},{"internalType": "address","name": "to","type": "address"},{"internalType": "uint256","name": "tokenId","type": "uint256"}],"name": "safeTransferFrom","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "from","type": "address"},{"internalType": "address","name": "to","type": "address"},{"internalType": "uint256","name": "tokenId","type": "uint256"},{"internalType": "bytes","name": "data","type": "bytes"}],"name": "safeTransferFrom","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "operator","type": "address"},{"internalType": "bool","name": "approved","type": "bool"}],"name": "setApprovalForAll","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "bool","name": "_enabled","type": "bool"}],"name": "setEnabled","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "string","name": "_uri","type": "string"}],"name": "setURI","outputs": [],"stateMutability": "nonpayable","type": "function"},{"anonymous": false,"inputs": [{"indexed": true,"internalType": "address","name": "from","type": "address"},{"indexed": true,"internalType": "address","name": "to","type": "address"},{"indexed": true,"internalType": "uint256","name": "tokenId","type": "uint256"}],"name": "Transfer","type": "event"},{"inputs": [{"internalType": "address","name": "from","type": "address"},{"internalType": "address","name": "to","type": "address"},{"internalType": "uint256","name": "tokenId","type": "uint256"}],"name": "transferFrom","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "newOwner","type": "address"}],"name": "transferOwnership","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [],"name": "unlock","outputs": [],"stateMutability": "payable","type": "function"},{"inputs": [],"name": "withdraw","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [],"name": "withdrawWine","outputs": [],"stateMutability": "nonpayable","type": "function"},{"inputs": [{"internalType": "address","name": "owner","type": "address"}],"name": "balanceOf","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "account","type": "address"}],"name": "canClaim","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "enabled","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "tokenId","type": "uint256"}],"name": "getApproved","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "account","type": "address"}],"name": "getTimeBonus","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "owner","type": "address"},{"internalType": "address","name": "operator","type": "address"}],"name": "isApprovedForAll","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "joeLP","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "MAX_SPEED_BONUS","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "mim","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "name","outputs": [{"internalType": "string","name": "","type": "string"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "owner","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "tokenId","type": "uint256"}],"name": "ownerOf","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "pool_id","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "stakeAmt","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "stakeToken","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "bytes4","name": "interfaceId","type": "bytes4"}],"name": "supportsInterface","outputs": [{"internalType": "bool","name": "","type": "bool"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "symbol","outputs": [{"internalType": "string","name": "","type": "string"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "timelock","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "tokenId","type": "uint256"}],"name": "tokenURI","outputs": [{"internalType": "string","name": "","type": "string"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "unlockAvax","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "unlockFee","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "uri","outputs": [{"internalType": "string","name": "","type": "string"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "","type": "address"}],"name": "user","outputs": [{"internalType": "uint256","name": "index","type": "uint256"},{"internalType": "bool","name": "unlocked","type": "bool"},{"internalType": "uint256","name": "balance","type": "uint256"},{"internalType": "uint256","name": "timestamp","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "userCount","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "uint256","name": "","type": "uint256"}],"name": "userList","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "vineyard","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "wavax","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"},{"inputs": [{"internalType": "address","name": "account","type": "address"}],"name": "wenClaim","outputs": [{"internalType": "uint256","name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "wine","outputs": [{"internalType": "address","name": "","type": "address"}],"stateMutability": "view","type": "function"}];
-
-var wine, grape;
-var vineyard;
-var vault;
-var account;
-
-const update = async() => {
-	await switchNetwork(CHAIN_ID); // Make sure we're on the c-chain
-	
-	// Get the connected account
-	await window.web3.eth.getAccounts().then(function(result) {
-		account = result[0];
-	});		
-	document.getElementById("address").innerHTML = account.substring(0, 6)+"..."+account.substring(38, 42);
-	
-	await wine.methods.balanceOf(VINEYARD).call({from: account}).then(function(bal) {
-		console.log(bal);
-	});
-	
-	await vault.methods.user(account).call({from: account}).then(async(userInfo) => {
-		console.log(userInfo['unlocked']);
-		if(userInfo['unlocked'] == true) {
-			$("#0x0c65BAD172717fA891805212d91854302ccC9236-unlockstate").html("Unlocked? Yes");
-			$("#0x0c65BAD172717fA891805212d91854302ccC9236-buttons-all").css({display: "flex"});
-			$("#0x0c65BAD172717fA891805212d91854302ccC9236-buttons-unlock").css({display: "none"});
-		} else {
-			$("#0x0c65BAD172717fA891805212d91854302ccC9236-unlockstate").html("Unlocked? No");
-			$("#0x0c65BAD172717fA891805212d91854302ccC9236-buttons-all").css({display: "none"});
-			$("#0x0c65BAD172717fA891805212d91854302ccC9236-buttons-unlock").css({display: "flex"});
-		}
-	});
-	
-	await vault.methods.unlockAvax().call({from: account}).then(async(unlockFee) => {
-		console.log(unlockFee);
-		$("#0x0c65BAD172717fA891805212d91854302ccC9236-unlockfee").html((unlockFee / 1e18).toFixed(2) + " AVAX");
-	});
-}
-
-const main = async () => {
-	if(await Web3Enabled()) { // Initialize web3 and connected to metamask		
-		wine = new window.web3.eth.Contract(TOKEN_ABI, WINE_TOKEN);
-		grape = new window.web3.eth.Contract(TOKEN_ABI, GRAPE_TOKEN);
-		vineyard = new window.web3.eth.Contract(VINEYARD_ABI, VINEYARD);
-		vault = new window.web3.eth.Contract(VAULT_ABI, VAULT);
-		
-		update();		
-		setInterval(async() => {
-			update();			
-		}, 5000);
-	}
-}
-
-const unlockVault = async(vault) => {
-	let v = new window.web3.eth.Contract(VAULT_ABI, vault);
-	let f = await v.methods.unlockAvax().call({from: account});
-	v.methods.unlock().send({from: account, value: f});
-}
-
-const showPreview = async(img) => {
-	$("#preview").html("<img src='" + img + "' />");
-	$("#preview").fadeIn();	
-}
-
-const hidePanels = async() => {
-	$(document).mouseup(function (e) {
-		if ($(e.target).closest("#preview").length
-					=== 0) {
-			$("#preview").fadeOut();
-		}		
-	});
-}
-
-var test_vault = '<div class="vaultbox"><div style="display: flex"><div class="vault-image"><img id="vault-test2" src="bg.png" /></div><div class="vault-info" ><div>Aikonic NFT Name</div><hr><div>Unlocked? Yes</div><div>Minimum Stake: 15 GRAPE</div><div>Staked: 150 GRAPE</div><div>Time Bonus: 2x</div><div>NFT Timer: 12d:18h:36m:54s</div><div>Claimable on: 10/18/2022</div><hr></div></div><div style="width: 100%; height: 48px;" ><div class="buttonbox"><div class="button">Deposit</div><div class="button">Withdraw</div><div class="button">Claim NFT</div></div></div></div>'
-
-const createVaultPanel = function(vaultName, colIdx) {
-	console.log(vaultName);
-	let vault = '<div class="vaultbox"><div style="display: flex"><div class="vault-image"><img id="vault-' +
-					vaultName +
-					'" onclick="showPreview(\'bg.png\')" src="bg.png" /></div><div class="vault-info" ><div>Aikonic NFT Name</div><hr><div>Unlocked? Yes</div><div>Minimum Stake: 15 GRAPE</div><div>Staked: 150 GRAPE</div><div>Time Bonus: 2x</div><div>NFT Timer: 12d:18h:36m:54s</div><div>Claimable on: 10/18/2022</div><hr></div></div><div style="width: 100%; height: 80px;" ><div class="buttonbox"><div><div class="button shadow">Deposit</div><div class="button shadow">Withdraw</div></div><div><input id="vault-input-' + vaultName + '" type="textarea" placeholder="0.00" style="font-size: 16px; width: 100px; padding: 4px 8px 4px 8px; text-align: right; border-radius: 5px;" /></div><div class="button shadow">Claim NFT</div></div></div></div>'
-	if(colIdx === 0) {
-		$("#vaults-col-left").html($("#vaults-col-left").html() + vault);	
-	} else {
-		$("#vaults-col-right").html($("#vaults-col-right").html() + vault);	
-	}
-	
-}
-
-$(document).ready(function() {
-/*	$("#btnClaim").click(quantumClaim);
-	$("#btnAllowance").click(allowance);
-	$("#btnShowWithdraw").click(showWithdrawPanel);
-	$("#btnShowDeposit").click(showDepositPanel);
-	$("#btnPerDiem").click(requestPerDiem);
-	*/
-	//$("#vaults-col-right").html($("#vaults-col-right").html() + test_vault);	
-	//$("#vault-test2").click({ img: "bg.png" }, showPreview);
-	//for(i = 0; i < 2; i++) {
-	//	createVaultPanel(i.toString(), i % 2);
-	//}	
-	main();
-	$("#button-connect").click(main);	
-});
-</script>
-
+<!-- Background image widget -->
 <div class="bgimage">
 </div>
 
+<!-- Top menu widget -->
 <div class="menubar">
 	<div style="display: flex">
-		<div style="margin: 0 0 0 16px; height: 100%; line-height: 48px;">About</div>
-		<div style="margin: 0 0 0 16px; height: 100%; line-height: 48px;">|</div>
-		<div style="margin: 0 0 0 16px; height: 100%; line-height: 48px;">Twitter</div>
+		<div class="menu-item">About</div>
+		<div class="menu-item">|</div>
+		<div class="menu-item">Twitter</div>
+		<div class="menu-item">|</div>
+		<div id="avaxprice" class="menu-item">1 AVAX = $0.00</div>
 		
-		<div id="button-connect" style="position: absolute; line-height: 48px; right: 16px; background: black; width: 125px; border-radius: 0 28px 28px 0;">
-			<div style="position: absolute; left: -56px; background: black; padding: 0 0 0 8px; border-radius: 28px 0 0 28px;">
-				<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/MetaMask_Fox.svg/1200px-MetaMask_Fox.svg.png" style="width: 48px; height: 48px" />
+		<div id="button-connect" class="menu-button">
+			<div class="mm-image">
+				<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/MetaMask_Fox.svg/1200px-MetaMask_Fox.svg.png" />
 			</div>
 			<div id="address">Connect</div>
 		</div>
 	</div>	
 </div>
 
+<!-- Main content widget -->
 <div class="main-container">
 	<div class="groupbox shadow" style="text-align: center;">		
 		<div>
@@ -367,41 +45,40 @@ $(document).ready(function() {
 			<div style="display: flex">
 <!-- Column 1 -->
 				<div id="vaults-col-left">
-					<div class="vaultbox">
+					<!--<div class="vaultbox">
 						<div style="display: flex">
 							<div class="vault-image">
-								<img id="vault-' + vaultName + '" onclick="showPreview(\'bg.png\')" src="bg.png" />
+								<img id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-nftimage" onclick="showPreview('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')" src="bg.png" />
 							</div>
 							<div class="vault-info" >
-								<div>Aikonic NFT Name</div>
+								<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-nftname">Aikonic NFT Name</div>
 								<hr>
-								<div id="0x0c65BAD172717fA891805212d91854302ccC9236-unlockstate">Unlocked? Yes</div>
-								<div>Minimum Stake: 15 GRAPE</div>
-								<div>Staked: 150 GRAPE</div>
-								<div>Time Bonus: 2x</div>
-								<div>NFT Timer: 12d:18h:36m:54s</div>
-								<div>Claimable on: 10/18/2022</div>
+								<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-minstake">Minimum Stake: 15 GRAPE</div>
+								<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-userbal">Staked: 150 GRAPE</div>
+								<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-userbonus">Time Bonus: 2x</div>
+								<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-timer">NFT Timer: 12d:18h:36m:54s</div>
+								<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-claimdate">Claimable on: 10/18/2022</div>
 								<hr>
 							</div>
 						</div>
-						<div style="width: 100%; height: 80px;" >
-							<div id="0x0c65BAD172717fA891805212d91854302ccC9236-buttons-unlock" class="buttonbox">
-								<div class="button shadow" onclick="unlockVault('0x0c65BAD172717fA891805212d91854302ccC9236')" >Unlock</div><div style="width: 100px">Unlock Fee:</div><div id="0x0c65BAD172717fA891805212d91854302ccC9236-unlockfee" style="width: 100px"> .33 AVAX</div>
+						<div style="width: 100%; height: 96px;" >
+							<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-buttons-unlock" class="buttonbox">
+								<div class="button shadow" onclick="unlockVault('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')" >Unlock</div><div style="width: 100px">Unlock Fee:</div><div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-unlockfee" style="width: 100px"> .33 AVAX</div>
 							</div>
-							<div id="0x0c65BAD172717fA891805212d91854302ccC9236-buttons-all" class="buttonbox" style="display: none;">
+							<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-buttons-all" class="buttonbox" style="display: none;">
 								<div>
-									<div class="button shadow">Deposit</div>
-									<div class="button shadow">Withdraw</div>
+									<div class="button shadow" onclick="depositVault('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')">Deposit &#127815;</div>
+									<div class="button shadow" onclick="withdrawVault('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')">Withdraw &#127815;</div>
 								</div>
 								<div>
-									<input id="vault-input-' + vaultName + '" type="textarea" placeholder="0.00" style="font-size: 16px; width: 132px; padding: 4px 8px 4px 8px; text-align: right; border-radius: 5px;" />
+									<input id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-input" type="textarea" placeholder="0.00" style="font-size: 16px; width: 132px; padding: 4px 8px 4px 8px; text-align: right; border-radius: 5px;" />
 								</div>
-								<div class="button shadow">
+								<div class="button shadow" onclick="claimVault('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')">
 									Claim NFT
 								</div>
 							</div>
 						</div>
-					</div>
+					</div>-->
 				</div>
 								
 <!-- Column 2 -->
@@ -413,8 +90,10 @@ $(document).ready(function() {
 	</div>
 </div>
 
+<!-- NFT preview widget -->
 <div id="preview" class="previewbox shadow"><img src="bg.png" /></div>
 
+<!-- Error message widget -->
 <div id="errorbox" class="error-panel shadow">
 <div class="superstar" style="color: #FFBAFF; font-size: 64px;">Error!</div>
 <div id="errormsg"></div>

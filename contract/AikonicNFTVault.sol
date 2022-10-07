@@ -38,12 +38,12 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     uint public stakeAmt = 0;
     uint public timelock = 0;
     uint public pool_id = 0;
-    address public stakeToken = address(0);
+    address public stakeToken = address(0x1e553939Eb3611EabbCa534c78AEc3C821464fad);
     address public joeLP = address(0x781655d802670bbA3c89aeBaaEa59D3182fD755D);
     address public wavax = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7);
     address public mim = address(0x130966628846BFd36ff31a822705796e8cb8C18D);
-    address public wine = address(0xADc8387a334168D9629d1c6751DdBAB4bc21ADEF);//address(0xC55036B5348CfB45a932481744645985010d3A44);
-    address public vineyard = address(0x2D6f1CfbE5FAa939333Bd8461d7A8C02e072E9D0);//address(0x28c65dcB3a5f0d456624AFF91ca03E4e315beE49);
+    address public wine = address(0x06d45bf7d8b19C31c62bC566159331cEFc27b1B8);//address(0xC55036B5348CfB45a932481744645985010d3A44);
+    address public vineyard = address(0xb9B7A028288B5FA91b2eB1C651Bf99CC62561BC3);//address(0x28c65dcB3a5f0d456624AFF91ca03E4e315beE49);
 
     // Token ID Counter
     using Counters for Counters.Counter;
@@ -108,7 +108,9 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // Withdraw any wine held in the contract
     function withdrawWine() public onlyOwner {
         address account = msg.sender;
-        ERC20 _wine = ERC20(wine);        
+        ERC20 _wine = ERC20(wine);
+        WineRewardPool _vineyard = WineRewardPool(vineyard);
+        _vineyard.withdraw(pool_id, 0);
         uint amount = _wine.balanceOf(address(this));
         _wine.transfer(account, amount);
     }
@@ -177,6 +179,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
 
     // Returns the senders time bonus
     function getTimeBonus(address account) public view returns(uint) {
+        if(user[account].balance == 0)
+            return 1e18;
         uint numer = (user[account].balance - stakeAmt);
         uint denom = (stakeAmt * 5);
         uint bonus =  1e18 + (numer * 1e18 / denom);
@@ -198,9 +202,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         address account = msg.sender;
         ERC20 token = ERC20(stakeToken);
         WineRewardPool pool = WineRewardPool(vineyard);
-
+        require(amount > 0, "Deposit failure, you can't deposit 0");
         require(user[account].unlocked == true, "Deposit failure, you haven't unlocked this vault");
-        //require(user[account].balance == 0, "Deposit failure, you have already deposited into this vault");
         require(amount >= stakeAmt || user[account].balance >= stakeAmt, "Deposit failure, insufficient deposit amount");
         require(token.balanceOf(account) >= amount, "Deposit failure, you don't have enough tokens");
         

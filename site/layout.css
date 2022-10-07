@@ -1,0 +1,202 @@
+@font-face {
+	font-family: Superstar;
+	src: url("superstar.ttf");
+}
+
+.shadow {
+	filter: drop-shadow(5px 5px 2px #000000FF);
+}
+
+body {
+	font-family: Consolas;
+	font-weight: bold;
+	font-size: 16px;
+	background-color: black;
+	color: #FFFFFF;
+}
+
+.bgimage {
+	position: fixed;
+	background: url('./bg.png');
+	filter: blur(4px);
+	opacity: .5;
+	background-attachment: fixed;
+	background-repeat: no-repeat;
+	background-size: auto 100%;
+	background-position: center center;
+	transform: translateZ(100px) scale(1.25);	
+	object-fit: fill;
+	left: 0px; top: 0px;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	z-index: -10;
+}
+
+.main-container {
+	position: absolute;
+	left: 50%;
+	top: 7.5%;
+	transform: translate(-50%, 0);
+	min-width: 1000px;
+	padding-left: .6vw;
+	padding-right: .6vw;
+}
+
+.superstar {
+	font-family: Superstar,"sans-serif";
+}
+
+oldbody {
+	background: linear-gradient(113deg, rgba(14,0,15,1) 0%, rgba(116,61,116,1) 72%, rgba(14,0,15,1) 100%);
+}
+
+.menubar {
+	position: fixed;
+	background: #3E113FDA;
+	border: 2px solid #BABABA; border-radius: 5px;	
+	left: 0;
+	top: 0;
+	width: 99.5%;
+	height: 48px;
+	z-index: 10;
+}
+
+.menu-item {
+	margin: 0 0 0 16px;
+	height: 100%;
+	line-height: 48px;
+}
+
+.menu-button {
+	position: absolute;
+	background: black;
+	line-height: 48px;
+	right: 16px;
+	width: 125px;
+	border-radius: 0 28px 28px 0;
+}
+
+.mm-image {
+	position: absolute;
+	left: -56px;
+	background: black;
+	padding: 0 0 0 8px;
+	border-radius: 28px 0 0 28px;
+}
+
+.mm-image img {
+	width: 48px;
+	height: 48px;
+}
+
+.groupbox {
+	border: 2px solid #BABABA; border-radius: 5px;	
+	background: #3E113F60;
+	width: 100%;
+	backdrop-filter: blur(4px);
+	padding: 8px 0 8px 0;
+}
+
+.vaultbox {
+	border: 2px solid #BABABA; border-radius: 5px;	
+	background: #3E113F60;	
+	backdrop-filter: blur(4px);
+	padding: 8px 0 8px 0;
+	margin: 16px 0 0 0;
+	width: 488px;
+	height: fit-content;
+}
+
+.vault-container {
+	position: absolute;
+	width: 1000px;
+	left: 50%;
+	transform: translate(-50%, 0);
+	margin: 16px 0 0 0;
+}
+
+.vault-image {
+	position: relative;
+	background: black;
+	width: 200px;
+	height: 200px;	
+	border: white solid 2px;
+	margin: 0 16px 0 16px;
+	border-radius: 16px;
+	overflow: hidden;
+}
+
+.vault-image img {	
+	position: absolute;
+	width: 100%;
+	height: auto;
+	border: white solid 2px;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.vault-info {
+	margin: 16px 16px 0 0px;
+	text-align: right;
+	width: 50%;
+}
+
+.previewbox {	
+	position: fixed;
+	display: none;
+	background: #3E113F60;
+	width: 600px;
+	height: 600px;
+	left: 50%;
+	top: 50%;
+	padding: 8px 0 8px 0;
+	transform: translate(-50%, -50%);
+	border: 2px solid #BABABA;
+	border-radius: 28px;
+	backdrop-filter: blur(4px);
+	z-index: 5;
+}
+
+.previewbox img {
+	width: 100%;
+	height: auto;
+	background-color: black;
+	margin-top: 50%;
+	transform: translate(0, -50%);	
+}
+
+.buttonbox {
+	position: absolute;
+	left: 50%; margin: 16px 0 0 0;
+	transform: translate(-50%, 0);
+	display: flex
+}
+
+.error-panel {
+	position: absolute;
+	background: black;
+	padding: 16px;
+	border: solid 2px #BA70BA;
+	border-radius: 16px;	
+	height: fit-content;
+	width: fit-content;
+	left: -50%;
+	top: 50%;
+	text-align: center;
+	transform: translate(-50%, -50%);
+	z-index: 100
+}
+
+.button {
+	background: #BA70BA;
+	padding: 4px 0 4px 0;
+	margin: 0 16px 8px 16px;
+	width: 125px;
+	height: fit-content;
+	cursor: hand;
+}
+
+.button:hover {
+	background: green;
+}
