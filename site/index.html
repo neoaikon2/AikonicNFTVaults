@@ -20,7 +20,7 @@
 	<div style="display: flex">
 		<div class="menu-item">About</div>
 		<div class="menu-item">|</div>
-		<div class="menu-item">Twitter</div>
+		<div class="menu-item"><a href="https://www.twitter.com/neoaikon" target="_blank"><img src="twitter.png" style="width: 32px; height: 32px; margin-top: 8px;" /></a></div>
 		<div class="menu-item">|</div>
 		<div id="avaxprice" class="menu-item">1 AVAX = $0.00</div>
 		
@@ -62,11 +62,14 @@
 							</div>
 						</div>
 						<div style="width: 100%; height: 96px;" >
-							<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-buttons-unlock" class="buttonbox">
+							<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-buttons-unlock" class="buttonbox" style="display: none;">
 								<div class="button shadow" onclick="unlockVault('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')" >Unlock</div><div style="width: 100px">Unlock Fee:</div><div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-unlockfee" style="width: 100px"> .33 AVAX</div>
 							</div>
-							<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-buttons-all" class="buttonbox" style="display: none;">
-								<div>
+							<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-buttons-all" class="buttonbox">
+								<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-buttons-approve">
+									<div class="button shadow" onclick="approveVault('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')">Approve &#127815;</div>
+								</div>
+								<div id="0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c-buttons-transfer" style="display: none">
 									<div class="button shadow" onclick="depositVault('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')">Deposit &#127815;</div>
 									<div class="button shadow" onclick="withdrawVault('0x46B668A2E4200f5ae4D1e3Ff01366E359CF6Ef5c')">Withdraw &#127815;</div>
 								</div>

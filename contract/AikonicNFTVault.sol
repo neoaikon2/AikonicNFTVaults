@@ -36,25 +36,24 @@ struct UserInfo {
 }
 
 contract AikonicNFTVault is ERC721URIStorage, Ownable {
-    uint public constant MAX_SPEED_BONUS = 2 * 1e18;
+    uint public constant MAX_SPEED_BONUS = 4 * 1e18;
+    uint public POOL_ID; // Pool ID of the farming pool
 
-    uint public unlockFee = 0; // Fee required to unlock the vault, fee is in USD, so 5 * 1e18 = $5
-    uint public stakeAmt = 0;  // Minimum amount to stake to earn the NFT
-    uint public timelock = 0; // Timelock period
-    uint public pool_id = 0; // Pool ID of the farming pool
+    uint public unlockFee; // Fee required to unlock the vault, fee is in USD, so 5 * 1e18 = $5
+    uint public stakeAmt;  // Minimum amount to stake to earn the NFT
+    uint public timelock; // Timelock period
 
     // Address objects
-    address public stakeToken = address(0x1e553939Eb3611EabbCa534c78AEc3C821464fad);
-    address public joeLP = address(0x781655d802670bbA3c89aeBaaEa59D3182fD755D);
-    address public wavax = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7);
-    address public mim = address(0x130966628846BFd36ff31a822705796e8cb8C18D);
-    address public wine = address(0x06d45bf7d8b19C31c62bC566159331cEFc27b1B8);//address(0xC55036B5348CfB45a932481744645985010d3A44);
-    address public vineyard = address(0xb9B7A028288B5FA91b2eB1C651Bf99CC62561BC3);//address(0x28c65dcB3a5f0d456624AFF91ca03E4e315beE49);
+    address public stakeToken = address(0xdc5e8bbEbBb782A64537E6d5561bF90c4BBa2D16); // GRAPE
+    address public farmPool = address(0x9549587bB761925E588f2CD00f69AE9e6eeeC69C);//address(0x28c65dcB3a5f0d456624AFF91ca03E4e315beE49); // Vineyard
+    address public LP = address(0x781655d802670bbA3c89aeBaaEa59D3182fD755D); // Joe LP
+    address public baseToken = address(0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7); // AVAX (WAVAX)
+    address public stableToken = address(0x130966628846BFd36ff31a822705796e8cb8C18D); // MIM
+    address public rewardToken = address(0x6d699dBC8d8b5Af289AaBcf430Fd88EEFcD4242f);//address(0xC55036B5348CfB45a932481744645985010d3A44); // WINE
 
     // Token ID Counter
     using Counters for Counters.Counter;
     Counters.Counter private tokenIds;
-    
     // IPFS Image URI
     string public uri = "";
 
@@ -73,12 +72,12 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     }
 
     // Constructor
-    constructor(string memory _uri, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _pool_id) ERC721("Aikonic NFT Collection", "AIKONS") {
+    constructor(string memory _uri, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _POOL_ID) ERC721("Aikonic NFT Collection", "AIKONS") {
         uri = _uri;
         unlockFee = _unlockFee;
         stakeAmt = _stakeAmt;
         timelock = _timelock;
-        pool_id = _pool_id;
+        POOL_ID = _POOL_ID;
         enabled = true;
     }
 
@@ -96,11 +95,15 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // Withdraw any developer rewards held in the contract
     function slurp() public onlyOwner {
         address account = msg.sender;
-        ERC20 _wine = ERC20(wine);
-        WineRewardPool _vineyard = WineRewardPool(vineyard);
-        _vineyard.withdraw(pool_id, 0);
-        uint amount = _wine.balanceOf(address(this));
-        _wine.transfer(account, amount);
+        ERC20 _rewardToken = ERC20(rewardToken);
+        WineRewardPool _farmPool = WineRewardPool(farmPool);
+        // Claim pending WINE
+        _farmPool.withdraw(POOL_ID, 0);
+        // Get the total balance of WINE
+        uint amount = _rewardToken.balanceOf(address(this));
+        // Withdraw rewards and avax
+        _rewardToken.transfer(account, amount);
+        payable(account).transfer(address(this).balance);        
     }
 
 /* User DB Functions */
@@ -132,16 +135,16 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     }
 
 /* Vault Functions */
-    // Returns the current price of avax to MIM from the trader joe LP
+    // Returns the current price of avax to stableToken from the trader joe LP
     function avaxPrice() internal pure returns(uint) {
         return 17 * 1e18;
 
         /* Uncomment when deploying to mainnet
-        ERC20 _wavax = ERC20(wavax);
-        ERC20 _mim = ERC20(mim);
-        uint wavaxBal = _wavax.balanceOf(joeLP);
-        uint mimBal = _mim.balanceOf(joeLP);
-        return mimBal * 1e18 / wavaxBal;
+        ERC20 _baseToken = ERC20(baseToken);
+        ERC20 _stableToken = ERC20(stableToken);
+        uint baseTokenBal = _baseToken.balanceOf(LP);
+        uint stableTokenBal = _stableToken.balanceOf(LP);
+        return stableTokenBal * 1e18 / baseTokenBal;
         */
     }
 
@@ -194,7 +197,7 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     function deposit(uint amount) public isEnabled {
         address account = msg.sender;
         ERC20 token = ERC20(stakeToken);
-        WineRewardPool pool = WineRewardPool(vineyard);
+        WineRewardPool pool = WineRewardPool(farmPool);
 
         // Sanity check
         require(amount > 0, "Deposit failure, you can't deposit 0");
@@ -215,11 +218,11 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         // Transfer the stake from the sender
         token.transferFrom(account, address(this), amount);
         // Give the farming pool permission to take the tokens
-        if(token.allowance(account, vineyard) < amount) {
-            token.approve(vineyard, amount);
+        if(token.allowance(address(this), farmPool) < amount) {
+            token.approve(farmPool, amount);
         }
         // Deposit
-        pool.deposit(pool_id, amount);
+        pool.deposit(POOL_ID, amount);
 
         // Add sender to the global depositor list
         addUser(account);
@@ -231,7 +234,7 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     function withdraw() public {
         address account = msg.sender;
         ERC20 token = ERC20(stakeToken);
-        WineRewardPool pool = WineRewardPool(vineyard);
+        WineRewardPool pool = WineRewardPool(farmPool);
 
         // Sanity check
         require(user[account].unlocked == true, "Withdraw failure, you haven't unlocked this vault");
@@ -242,7 +245,7 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
             mint(account);
 
         // Withdraw the users tokens out of the farming pool
-        pool.withdraw(pool_id, user[account].balance);
+        pool.withdraw(POOL_ID, user[account].balance);
         // Transfer back staked amount
         token.transfer(account, user[account].balance);
 

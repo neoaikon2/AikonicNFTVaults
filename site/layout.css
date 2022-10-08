@@ -129,15 +129,15 @@ oldbody {
 
 .vault-image img {	
 	position: absolute;
-	width: 100%;
-	height: auto;
+	width: auto;
+	height: 100%;
 	border: white solid 2px;
 	top: 50%;
 	transform: translate(-50%, -50%);
 }
 
 .vault-info {
-	margin: 16px 16px 0 0px;
+	margin: 0 16px 0 0px;
 	text-align: right;
 	width: 50%;
 }
@@ -155,12 +155,13 @@ oldbody {
 	border: 2px solid #BABABA;
 	border-radius: 28px;
 	backdrop-filter: blur(4px);
+	overflow: hidden;
 	z-index: 5;
 }
 
 .previewbox img {
-	width: 100%;
-	height: auto;
+	width: auto;
+	height: 100%;
 	background-color: black;
 	margin-top: 50%;
 	transform: translate(0, -50%);	
