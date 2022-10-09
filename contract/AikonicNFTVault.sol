@@ -45,11 +45,11 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     uint public timelock; // Timelock period
 
     // Address objects
-    address public stakeToken = address(0xdc5e8bbEbBb782A64537E6d5561bF90c4BBa2D16); // GRAPE
-    address public farmPool = address(0x9549587bB761925E588f2CD00f69AE9e6eeeC69C);//address(0x28c65dcB3a5f0d456624AFF91ca03E4e315beE49); // Vineyard
+    address public stakeToken = address(0x5541D83EFaD1f281571B343977648B75d95cdAC2); // GRAPE
+    address public farmPool = address(0x28c65dcB3a5f0d456624AFF91ca03E4e315beE49); // Vineyard
     address public LP = address(0xb382247667fe8CA5327cA1Fa4835AE77A9907Bc8); // Joe LP    
     address public stableToken = address(0x130966628846BFd36ff31a822705796e8cb8C18D); // MIM
-    address public rewardToken = address(0x6d699dBC8d8b5Af289AaBcf430Fd88EEFcD4242f);//address(0xC55036B5348CfB45a932481744645985010d3A44); // WINE
+    address public rewardToken = address(0xC55036B5348CfB45a932481744645985010d3A44); // WINE
 
     // Token ID Counter
     using Counters for Counters.Counter;
@@ -135,15 +135,12 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
 
 /* Vault Functions */
     // Returns the current price of avax to stableToken from the trader joe LP
-    function grapePrice() internal pure returns(uint) {
-        return 33 * 1e16;
-
-        // Uncomment when deploying to mainnet
-        /*ERC20 _stakeToken = ERC20(stakeToken);
+    function grapePrice() internal view returns(uint) {
+        ERC20 _stakeToken = ERC20(stakeToken);
         ERC20 _stableToken = ERC20(stableToken);
         uint stakeTokenBal = _stakeToken.balanceOf(LP);
         uint stableTokenBal = _stableToken.balanceOf(LP);
-        return stableTokenBal * 1e18 / stakeTokenBal;*/
+        return stableTokenBal * 1e18 / stakeTokenBal;
     }
 
     // Returns the current unlock fee in AVAX
