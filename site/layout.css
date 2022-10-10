@@ -126,7 +126,7 @@ a:hover {
 	width: 200px;
 	height: 200px;	
 	border: white solid 2px;
-	margin: 0 16px 0 16px;
+	margin: 8px 16px 0 16px;
 	border-radius: 16px;
 	overflow: hidden;
 }

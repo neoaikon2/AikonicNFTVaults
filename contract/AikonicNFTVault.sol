@@ -284,11 +284,21 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // Try to claim an NFT
     function claim() public {
         address account = msg.sender;
+        WineRewardPool pool = WineRewardPool(farmPool);
 
         // Sanity check
         require(user[account].unlocked == true, "Claim failure, you haven't unlocked this vault");
         require(user[account].balance > 0, "Claim failure, you don't have a stake in this vault");
         require(canClaim(account), "Claim failure, you need to wait a while longer");
+
+        // Check for pending rewards
+        uint pending = pool.pendingShare(POOL_ID, address(this));
+        if(pending > 0) {
+            // Claim any pending pool rewards
+            pool.withdraw(POOL_ID, 0);
+            // Send rewards to dev address
+            slurp();
+        }   
         
         // Mint the NFT
         mint(account);
@@ -297,6 +307,10 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     }
 
 /* NFT Functions */
+
+    function totalSupply() public view returns(uint) {
+        return tokenIds.current();
+    }
 
     // Mint a new token to the supplied address
     function mint(address _address) public onlyOwner returns (uint) {
