@@ -150,7 +150,7 @@ const update = async() => {
 	/*await wine.methods.balanceOf(VINEYARD).call({from: account}).then(function(bal) {
 		console.log(bal);
 	});*/
-	/*
+	
 	let grapePrice = 0;
 	await mim.methods.balanceOf(GRAPE_MIM_LP).call({from: account}).then(async(mimBal) => {
 		await grape.methods.balanceOf(GRAPE_MIM_LP).call({from: account}).then(async(grapeBal) => {
@@ -159,7 +159,7 @@ const update = async() => {
 		});
 	});
 	$("#grapeprice").html("1 GRAPE = ~$" + grapePrice.toFixed(2));
-		*/
+	
 	for(let i = 0; i < VAULTS.length; i++)
 		updateVault(VAULTS[i]);
 }

@@ -15,6 +15,14 @@ body {
 	color: #FFFFFF;
 }
 
+a {
+	color: #BA70BA;
+}
+
+a:hover {
+	color: green;
+}
+
 .bgimage {
 	position: fixed;
 	background: url('./bg.png');
@@ -45,10 +53,6 @@ body {
 
 .superstar {
 	font-family: Superstar,"sans-serif";
-}
-
-oldbody {
-	background: linear-gradient(113deg, rgba(14,0,15,1) 0%, rgba(116,61,116,1) 72%, rgba(14,0,15,1) 100%);
 }
 
 .menubar {
@@ -164,7 +168,8 @@ oldbody {
 	height: 100%;
 	background-color: black;
 	margin-top: 50%;
-	transform: translate(0, -50%);	
+	margin-left: 50%;
+	transform: translate(-50%, -50%);	
 }
 
 .buttonbox {

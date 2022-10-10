@@ -72,7 +72,7 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     }
 
     // Constructor
-    constructor(string memory _uri, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _POOL_ID) ERC721("Aikonic NFT Collection", "AIKONS") {
+    constructor(string memory _uri, string memory _name, string memory _symbol, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _POOL_ID) ERC721(string.concat("Aikonic NFT - ", _name), _symbol) {
         uri = _uri;
         unlockFee = _unlockFee;
         stakeAmt = _stakeAmt;
