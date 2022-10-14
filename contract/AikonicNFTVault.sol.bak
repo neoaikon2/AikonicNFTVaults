@@ -54,12 +54,14 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // Token ID Counter
     using Counters for Counters.Counter;
     Counters.Counter private tokenIds;
+    uint mintMax = 0;
     // IPFS Image URI
     string public uri = "";
 
     // User DB
     mapping(address => UserInfo) public user;
     address[] public userList;
+    address public dev;
 
     // Contract active state
     bool public enabled = false;
@@ -72,12 +74,13 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     }
 
     // Constructor
-    constructor(string memory _uri, string memory _name, string memory _symbol, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _POOL_ID) ERC721(string.concat("Aikonic NFT - ", _name), _symbol) {
+    constructor(string memory _uri, string memory _symbol, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _POOL_ID) ERC721("Aikonic NFTs", _symbol) {
         uri = _uri;
         unlockFee = _unlockFee;
         stakeAmt = _stakeAmt;
         timelock = _timelock;
         POOL_ID = _POOL_ID;
+        dev = msg.sender;
         enabled = true;
     }
 
@@ -87,22 +90,20 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         uri = _uri;
     }
 
+    function setDev(address _dev) public onlyOwner {
+        require(_dev != address(0), "Can't set dev to 0 address");
+        dev = _dev;
+    }
+
+    // Set the maximum mintable NFTs,
+    function setMax(uint _max) public onlyOwner {
+        require(_max >= totalSupply(), "Set Max Failure, can't set to less than current total supply");
+        mintMax = _max;
+    }
+
     // Enable/disable deposits
     function setEnabled(bool _enabled) public onlyOwner{
         enabled = _enabled;
-    }
-
-    // Withdraw any developer rewards held in the contract
-    function slurp() public onlyOwner {
-        address account = msg.sender;
-        ERC20 _rewardToken = ERC20(rewardToken);
-        WineRewardPool _farmPool = WineRewardPool(farmPool);
-        // Claim pending WINE
-        _farmPool.withdraw(POOL_ID, 0);
-        // Get the total balance of WINE
-        uint amount = _rewardToken.balanceOf(address(this));
-        // Withdraw rewards
-        _rewardToken.transfer(account, amount);        
     }
 
 /* User DB Functions */
@@ -175,6 +176,20 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         return bonus;
     }
 
+    // Slurp WINE rewards to dev address, this function should only
+    // really be called when a user deposits/withdraws or claims from
+    // the vault
+    function slurp() internal {
+        // Get reward token object
+        ERC20 _rewardToken = ERC20(rewardToken);
+        // Get the total balance of WINE
+        uint incomingWine = _rewardToken.balanceOf(address(this));
+        // Withdraw any available rewards to dev address
+        if(incomingWine > 0) {
+            _rewardToken.transfer(dev, incomingWine); 
+        }
+    }
+
     // Unlock the vault by sending the unlock cost
     function unlock(uint amount) public isEnabled {        
         address account = msg.sender;
@@ -224,8 +239,12 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         if(token.allowance(address(this), farmPool) < amount) {
             token.approve(farmPool, amount);
         }
+
         // Deposit
         pool.deposit(POOL_ID, amount);
+
+        // Send rewards to dev address
+        slurp();
 
         // Add sender to the global depositor list
         addUser(account);
@@ -252,6 +271,9 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
         // Transfer back staked amount
         token.transfer(account, user[account].balance);
 
+        // Send rewards to dev address
+        slurp();
+
         // Clear senders state
         user[account].balance = 0;
         user[account].timestamp = 0;
@@ -263,11 +285,21 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // Try to claim an NFT
     function claim() public {
         address account = msg.sender;
+        WineRewardPool pool = WineRewardPool(farmPool);
 
         // Sanity check
         require(user[account].unlocked == true, "Claim failure, you haven't unlocked this vault");
         require(user[account].balance > 0, "Claim failure, you don't have a stake in this vault");
         require(canClaim(account), "Claim failure, you need to wait a while longer");
+
+        // Check for pending rewards
+        uint pending = pool.pendingShare(POOL_ID, address(this));
+        if(pending > 0) {
+            // Claim any pending pool rewards
+            pool.withdraw(POOL_ID, 0);
+            // Send rewards to dev address
+            slurp();
+        }   
         
         // Mint the NFT
         mint(account);
@@ -277,9 +309,16 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
 
 /* NFT Functions */
 
+    function totalSupply() public view returns(uint) {
+        return tokenIds.current();
+    }
+
     // Mint a new token to the supplied address
     function mint(address _address) public onlyOwner returns (uint) {
         tokenIds.increment();
+        if(mintMax > 0)
+            require(tokenIds.current() <= mintMax, "Mint failure, sold out!");
+
         uint mintId = tokenIds.current();
 
         _mint(_address, mintId);

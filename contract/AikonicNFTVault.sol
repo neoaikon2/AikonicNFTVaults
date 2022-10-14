@@ -54,7 +54,7 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     // Token ID Counter
     using Counters for Counters.Counter;
     Counters.Counter private tokenIds;
-    uint mintMax = 0;
+    uint public mintMax = 0;
     // IPFS Image URI
     string public uri = "";
 

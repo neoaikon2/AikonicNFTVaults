@@ -117,7 +117,7 @@ a:hover {
 	width: 1000px;
 	left: 50%;
 	transform: translate(-50%, 0);
-	margin: 16px 0 0 0;
+	margin: 16px 0 32px 0;
 }
 
 .vault-image {

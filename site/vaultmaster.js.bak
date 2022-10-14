@@ -138,7 +138,7 @@ const updateVault = async(vaultAddress) => {
 	
 	$("#" + vaultAddress + "-unlockfee").html((unlockFee / 1e18).toFixed(2) + " GRAPE");
 	if(maxMint === 0) {
-		$("#" + vaultAddress + "-minted").html(minted + "/&#8734; Minted");	
+		$("#" + vaultAddress + "-minted").html(minted + "/#8734; Minted");	
 	} else {
 		if(minted < maxMint) {		
 			$("#" + vaultAddress + "-minted").html(minted + "/" + maxMint + " Minted");	
