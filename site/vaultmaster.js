@@ -73,7 +73,7 @@ var vaultTemplate = [ "<div class=\"vaultbox\"><div style=\"display: flex\"><div
 "-claimdate\"></div></div></div><hr><div style=\"width: 100%;\"><div id=\"",
 "-buttons-approve\" class=\"buttonbox\" style=\"display: flex;\"><div class=\"button shadow\" style=\"width: 200px; height: 58px; line-height: 50px; font-size: 24px;\" onclick=\"approveVault('",
 "')\">Approve &#127815;</div></div><div id=\"",
-"-buttons-unlock\" class=\"buttonbox\" style=\"display: none; height: 76px;\"><div class=\"button shadow\" onclick=\"unlockVault('",
+"-buttons-unlock\" class=\"buttonbox\" style=\"display: none; height: 76px; top: 24px;\"><div class=\"button shadow\" onclick=\"unlockVault('",
 "')\">Unlock</div><div style=\"width: 100px\">Unlock Fee:</div><div id=\"",
 "-unlockfee\" style=\"width: 100px\"></div></div><div id=\"",
 "-buttons-transfer\" class=\"buttonbox\" style=\"display: none;\"><div style=\"display: block;\"><div class=\"button shadow\" onclick=\"depositVault('",
@@ -119,7 +119,7 @@ const updateVault = async(vaultAddress) => {
 		$("#" + vaultAddress + "-buttons-unlock").css({display: "flex"});
 		
 		// See if we need to show/hide the transfer buttons
-		if(userInfo['unlocked'] === false) {
+		if(userInfo['unlocked'] === true) {
 			// Show transfer buttons
 			$("#" + vaultAddress + "-buttons-transfer").css({display: "flex"});
 			$("#" + vaultAddress + "-buttons-unlock").css({display: "none"});
@@ -242,6 +242,7 @@ const depositVault = async(vault) => {
 	
 	await v.methods.deposit(BigInt(d*1e18)).estimateGas({from: account}).then(async() => {
 		v.methods.deposit(BigInt(d*1e18)).send({from: account});
+		$("#" + vault + "-input").val("");
 	}).catch(async(e) => {		
 		showError(e);
 	});
