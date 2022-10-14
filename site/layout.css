@@ -140,6 +140,20 @@ a:hover {
 	transform: translate(-50%, -50%);
 }
 
+.vault-image-minted {
+	position: absolute;
+	top: 0; 
+	width: 100%;
+	text-align: center;	
+}
+
+.vault-image-owned {
+	position: absolute;
+	bottom: 0; 
+	width: 100%;
+	text-align: center;	
+}
+
 .vault-info {
 	margin: 0 16px 0 0px;
 	text-align: right;
@@ -173,10 +187,12 @@ a:hover {
 }
 
 .buttonbox {
-	position: absolute;
-	left: 50%; margin: 16px 0 0 0;
-	transform: translate(-50%, 0);
-	display: flex
+	position: relative;
+	margin: 8px 0 0 0;	
+	width: fit-content;	
+	left: 50%;		
+	transform: translate(-50%, 0%);
+	display: flex;
 }
 
 .error-panel {

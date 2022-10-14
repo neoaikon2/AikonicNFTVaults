@@ -97,7 +97,7 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
 
     // Set the maximum mintable NFTs,
     function setMax(uint _max) public onlyOwner {
-        require(_max > 0, "Set Max Failure, can't set to 0");
+        require(_max >= totalSupply(), "Set Max Failure, can't set to less than current total supply");
         mintMax = _max;
     }
 

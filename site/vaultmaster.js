@@ -98,7 +98,7 @@ const updateVault = async(vaultAddress) => {
 	
 	// Get the amount of minted tokens and the maximum mintable amount
 	let minted = 0;//await vault.methods.totalSupply().call({from: account});
-	let maxMint = "Infinity";//await vault.methods.maxMint().call({from: account});
+	let maxMint = 0;//await vault.methods.maxMint().call({from: account});
 		
 	// Get the time bonus
 	let bonus = await vault.methods.getTimeBonus(account).call({from: account});
@@ -131,16 +131,21 @@ const updateVault = async(vaultAddress) => {
 	let data = await json.json();
 	
 	$("#" + vaultAddress + "-unlockfee").html((unlockFee / 1e18).toFixed(2) + " GRAPE");
-	if(minted < maxMint) {
-	$("#" + vaultAddress + "-minted").html(minted + "/" + maxMint);
+	if(maxMint === 0) {
+		$("#" + vaultAddress + "-minted").html(minted + " Minted");	
 	} else {
-		$("#" + vaultAddress + "-minted").html("Sold Out!");
+		if(minted < maxMint) {		
+			$("#" + vaultAddress + "-minted").html(minted + "/" + maxMint);	
+		} else {
+			$("#" + vaultAddress + "-minted").html("Sold Out!");
+		}
 	}
 	$("#" + vaultAddress + "-minstake").html("Req. Stake: " + (stakeAmt/1e18).toFixed(2) + " " + tokenSymbol);
+	$("#" + vaultAddress + "-owned").html(nftBalance + " Owned");
 	$("#" + vaultAddress + "-userbal").html("Staked: " + (userInfo['balance']/1e18).toFixed(2) + " " + tokenSymbol);
 	$("#" + vaultAddress + "-userbonus").html("Time Bonus: " + (bonus/1e18).toFixed(2) + "x");
 	
-	$("#" + vaultAddress + "-nftname").html("(" + nftBalance + ") " + data['name']);
+	$("#" + vaultAddress + "-nftname").html(data['name'] + "<br>" + data['attributes'][0]['trait_type'] + ": " + data['attributes'][0]['value']);
 	$("#" + vaultAddress + "-nftimage").attr("src", data['image']);
 	$("#" + vaultAddress + "-nftimage").attr("title", data['description']);
 	
@@ -263,14 +268,15 @@ const hidePanels = async() => {
 var test_vault = '<div class="vaultbox"><div style="display: flex"><div class="vault-image"><img id="vault-test2" src="bg.png" /></div><div class="vault-info" ><div>Aikonic NFT Name</div><hr><div>Unlocked? Yes</div><div>Minimum Stake: 15 GRAPE</div><div>Staked: 150 GRAPE</div><div>Time Bonus: 2x</div><div>NFT Timer: 12d:18h:36m:54s</div><div>Claimable on: 10/18/2022</div><hr></div></div><div style="width: 100%; height: 48px;" ><div class="buttonbox"><div class="button">Deposit</div><div class="button">Withdraw</div><div class="button">Claim NFT</div></div></div></div>'
 var vaultLayout = [ "<div class=\"vaultbox\"><div style=\"display: flex\"><div class=\"vault-image\"><img id=\"",
 "-nftimage\" onclick=\"showPreview('",
-"')\"></div><div class=\"vault-info\"><div id=\"",
-"-nftname\"></div><hr><div id=\"",
-"-minted\"></div><div id=\"",
+"')\"><div id=\"",
+"-minted\" class=\"vault-image-minted\"></div><div id=\"",
+"-owned\" class=\"vault-image-owned\"></div></div><div class=\"vault-info\"><div id=\"",
+"-nftname\"></div><div id=\"",
 "-minstake\" style=\"margin-top: 8px;\"></div><div id=\"",
 "-userbal\" style=\"margin-top: 8px;\"></div><div id=\"",
 "-userbonus\"></div><div id=\"",
 "-timer\" style=\"margin-top: 8px;\"></div><div id=\"",
-"-claimdate\"></div><hr></div></div><div style=\"width: 100%; height: 96px;\"><div id=\"",
+"-claimdate\"></div></div></div><hr><div style=\"width: 100%;\"><div id=\"",
 "-buttons-approve\" class=\"buttonbox\" style=\"display: flex;\"><div class=\"button shadow\" style=\"width: 200px; height: 50px; line-height: 50px; font-size: 24px;\" onclick=\"approveVault('",
 "')\">Approve &#127815;</div></div><div id=\"",
 "-buttons-unlock\" class=\"buttonbox\" style=\"display: none;\"><div class=\"button shadow\" onclick=\"unlockVault('",
