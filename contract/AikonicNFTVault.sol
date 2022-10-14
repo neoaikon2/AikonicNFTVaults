@@ -74,7 +74,7 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     }
 
     // Constructor
-    constructor(string memory _uri, string memory _name, string memory _symbol, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _POOL_ID) ERC721(string.concat("Aikonic NFT - ", _name), _symbol) {
+    constructor(string memory _uri, string memory _symbol, uint _unlockFee, uint _stakeAmt, uint _timelock, uint _POOL_ID) ERC721("Aikonic NFTs", _symbol) {
         uri = _uri;
         unlockFee = _unlockFee;
         stakeAmt = _stakeAmt;
@@ -177,7 +177,8 @@ contract AikonicNFTVault is ERC721URIStorage, Ownable {
     }
 
     // Slurp WINE rewards to dev address, this function should only
-    // really be called when a user deposits/withdraws from the pool
+    // really be called when a user deposits/withdraws or claims from
+    // the vault
     function slurp() internal {
         // Get reward token object
         ERC20 _rewardToken = ERC20(rewardToken);
