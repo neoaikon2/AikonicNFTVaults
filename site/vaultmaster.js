@@ -140,6 +140,7 @@ const updateVault = async(vaultAddress) => {
 	let epoch = await vault.methods.wenClaim(account).call({from: account});
 	let timelock = await vault.methods.timelock().call({from: account});
 	let dt = new Date(0);
+	dt.setUTCSeconds(epoch);
 	// Calculate when they can claim their NFT
 	if((Date.now()/1000) >= epoch && userInfo['balance'] > 0) {
 		// Ready to claim!
